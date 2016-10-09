@@ -1,0 +1,117 @@
+---
+title: "Weight Lifting - Prediction Assignment - Practical Machine Learning"
+author: "E. Moerman"
+date: "10/07/2016"
+output: html_document
+---
+
+# Introduction
+
+This study determines the quality of weight lifting excercises. For this it uses on-body sensors. 
+
+# Preparation data sets
+
+The data can be found on the internet. The code below loads the data sets directly from the internet.
+
+The data is 
+
+```{r}
+trainingDat = read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
+
+testDat = read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")
+
+```
+
+The data types determined by R during the reading of these csv-files is used.
+Some data manipulation is needed to make sure that the training data and the test data are comparible. This needs to be done for factor variables. For both the training data and the test data factor variables get all the levels occuring in the union of the training and test sets of that factor variable. The relevant factor variables are 'user_name', 'cvtd_timestamp' and 'new_window'. The 'classe' variable does not occur in the test set.
+
+```{r}
+
+levels(testDat$user_name) <- unique(levels(trainingDat$user_name), levels(testDat$user_name))
+
+levels(testDat$cvtd_timestamp) <- unique(levels(trainingDat$cvtd_timestamp), levels(testDat$cvtd_timestamp))
+
+levels(testDat$new_window) <- unique(levels(trainingDat$new_window), levels(testDat$cvtd_timestamp))
+
+```
+
+A number of variables are clearly intended to be numerical values. In a number of cases I find text values '#DIV/0!' for some numeric variables. R interprets these fields incorrectly as factors. I fix this by replacing this text with the value 9999 and converting the variable to a numeric. Division by 0 will lead to a large positive or negative value. At the moment I will not try to find out the correct sign, but I will assume a large positive value. This can introduce inaccuracies in the data, but it is simple and the result might not be significantly impacted by this choice. 
+
+This conversion is done for both the training and the test data. When the conversion is finished NA-values are replaced by 0 since that is the easiest replacement. Although the replacement value might not be the optimal choice the result might not be significantly impacted by this choice.
+
+```{r}
+# These are factor variables and should be left alone.
+doNothing <- c("user_name", "cvtd_timestamp", "classe", "new_window")
+
+# This are all column names where R did not use a numerical data type. This is caused by the occurrence of text values.
+noNums <- names(trainingDat)[!sapply(trainingDat, is.numeric)]
+# From these names we remove the variables that should be left alone.
+cols2Change <- noNums[! noNums %in% doNothing]
+
+# Replacing the text value '#DIV/0!' by a number 9999 and converting the variable type to numeric
+# For the training data.
+trainingDat[, cols2Change] <- data.frame(sapply(trainingDat[, cols2Change], function(x) as.numeric(sub("#DIV/0!", 9999, x))))
+
+# For the test data.
+testDat[, cols2Change] <- data.frame(sapply(testDat[, cols2Change], function(x) as.numeric(sub("#DIV/0!", 9999, x))))
+
+# Replacing NA-values with 0.
+trainingDat[is.na(trainingDat)] <- 0
+testDat[is.na(testDat)] <- 0
+
+```
+
+A number of variables have more than 1 distinct peak. See the below histogram for example.
+
+```{r}
+
+hist(trainingDat$roll_belt, main="Belt roll frequencies", xlab="Belt roll")
+
+```
+
+Thinking about physical excercise I can imagine that both peaks are correct and deviations from them are incorrect. For instance 2 different exercises could result in 2 different peaks. The usual centering and scaling would destroy this information. Therefore I decide not to scale the variables. If the resulting model performs not well enough I will reconsider.
+The replacement value for the '#DIV/0!' text values can have a significant effect on centering and scaling operations. Since I don't center and don't scale I need not worry about this.
+
+# Study design
+The website provides training data and testing data. The amount of data is large and actual test data is provided separately, as a result I can use a large part of the provided data for training purposes. 
+I use 75% of the training data as data to train a model and the remaining part of training data for cross validation purposes. The cross validation data is used a single time in order to determine the out-of-sample error.
+
+```{r}
+
+set.seed(12344)
+
+inTrain <- runif(dim(trainingDat)[1]) < 0.75
+# The data used to train the model.
+trainDat <- trainingDat[inTrain, ]
+# The data used for cross-validation. Use only once.
+cvDat <- trainingDat[!inTrain, ]
+
+```
+
+# The model
+
+The variable that needs to be predicted is "classe". All other variables can be used as predictors.
+The data consists of mostly numerical data and a few factor variables. The numerical values are not scaled and not centered.
+The model to be used should be able to handle this. Random forests handle a mix of numerical and factor variables well. In addition it can cope well with unscaled data. It should also handle the replacement value for the '#DIV/0!' text values relatively well.
+Therefore I decide to use a random forest.
+The random forest method in the caret package results in memory problems, so I used the 'randomForest' package.
+
+```{r}
+
+library(randomForest)
+# There are 160 colums and the last one holds the variable that needs to be predicted.
+modRF <- randomForest(x=trainDat[, 1:159], y=trainDat$classe)
+
+predTrain <- predict(modRF, newdata=trainDat)
+predCv <- predict(modRF, newdata=cvDat)
+predTest <- predict(modRF, newdata=testDat)
+
+# Checking the results for training and cross validation. I use the caret package for convenience.
+library(caret)
+confusionMatrix(predTrain, trainDat$classe)
+
+confusionMatrix(predCv, cvDat$classe)
+
+```
+
+The confusion matrix in caret shows for the sample data a 100% match. The cross validation data has not been used in the training. Therefore the accuracy for the cross validation data reported by the caret confusion matrix can be used as expected out of sample accuracy. It is 99.98%, so the out of sample error rate is 0.02%.
