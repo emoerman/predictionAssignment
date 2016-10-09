@@ -179,11 +179,12 @@ cvDat &lt;- trainingDat[!inTrain, ]</code></pre>
 <div id="the-model" class="section level1">
 <h1>The model</h1>
 <p>The variable that needs to be predicted is “classe”. All other variables can be used as predictors. The data consists of mostly numerical data and a few factor variables. The numerical values are not scaled and not centered. The model to be used should be able to handle this. Random forests handle a mix of numerical and factor variables well. In addition it can cope well with unscaled data. It should also handle the replacement value for the ‘#DIV/0!’ text values relatively well. Therefore I decide to use a random forest. The random forest method in the caret package results in memory problems, so I used the ‘randomForest’ package.</p>
+<p>Since the first 7 variables are possibly alternative indicators for the outcome they are skipped.</p>
 <pre class="r"><code>library(randomForest)</code></pre>
 <pre><code>## randomForest 4.6-12</code></pre>
 <pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
 <pre class="r"><code># There are 160 colums and the last one holds the variable that needs to be predicted.
-modRF &lt;- randomForest(x=trainDat[, 1:159], y=trainDat$classe)
+modRF &lt;- randomForest(x=trainDat[, 8:159], y=trainDat$classe)
 
 predTrain &lt;- predict(modRF, newdata=trainDat)
 predCv &lt;- predict(modRF, newdata=cvDat)
@@ -235,34 +236,34 @@ library(caret)</code></pre>
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1424    0    0    0    0
-##          B    0  931    1    0    0
-##          C    0    0  856    0    0
-##          D    0    0    0  788    0
-##          E    0    0    0    0  886
+##          A 1423    7    0    0    0
+##          B    1  923    1    0    0
+##          C    0    1  856   11    0
+##          D    0    0    0  776    0
+##          E    0    0    0    1  886
 ## 
 ## Overall Statistics
-##                                      
-##                Accuracy : 0.9998     
-##                  95% CI : (0.9989, 1)
-##     No Information Rate : 0.2914     
-##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16  
-##                                      
-##                   Kappa : 0.9997     
-##  Mcnemar's Test P-Value : NA         
+##                                           
+##                Accuracy : 0.9955          
+##                  95% CI : (0.9932, 0.9972)
+##     No Information Rate : 0.2914          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9943          
+##  Mcnemar's Test P-Value : NA              
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            1.0000   1.0000   0.9988   1.0000   1.0000
-## Specificity            1.0000   0.9997   1.0000   1.0000   1.0000
-## Pos Pred Value         1.0000   0.9989   1.0000   1.0000   1.0000
-## Neg Pred Value         1.0000   1.0000   0.9998   1.0000   1.0000
+## Sensitivity            0.9993   0.9914   0.9988   0.9848   1.0000
+## Specificity            0.9980   0.9995   0.9970   1.0000   0.9998
+## Pos Pred Value         0.9951   0.9978   0.9862   1.0000   0.9989
+## Neg Pred Value         0.9997   0.9980   0.9998   0.9971   1.0000
 ## Prevalence             0.2914   0.1905   0.1754   0.1613   0.1813
-## Detection Rate         0.2914   0.1905   0.1752   0.1613   0.1813
-## Detection Prevalence   0.2914   0.1907   0.1752   0.1613   0.1813
-## Balanced Accuracy      1.0000   0.9999   0.9994   1.0000   1.0000</code></pre>
-<p>The confusion matrix in caret shows for the sample data a 100% match. The cross validation data has not been used in the training. Therefore the accuracy for the cross validation data reported by the caret confusion matrix can be used as expected out of sample accuracy. It is 99.98%, so the out of sample error rate is 0.02%.</p>
+## Detection Rate         0.2912   0.1889   0.1752   0.1588   0.1813
+## Detection Prevalence   0.2927   0.1893   0.1777   0.1588   0.1815
+## Balanced Accuracy      0.9986   0.9955   0.9979   0.9924   0.9999</code></pre>
+<p>The confusion matrix in caret shows for the sample data a 100% match. The cross validation data has not been used in the training. Therefore the accuracy for the cross validation data reported by the caret confusion matrix can be used as expected out of sample accuracy. It is 99.55%, so the out of sample error rate is 0.45%.</p>
 </div>
 <div id="prediction" class="section level1">
 <h1>Prediction</h1>
