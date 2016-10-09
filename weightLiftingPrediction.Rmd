@@ -115,3 +115,12 @@ confusionMatrix(predCv, cvDat$classe)
 ```
 
 The confusion matrix in caret shows for the sample data a 100% match. The cross validation data has not been used in the training. Therefore the accuracy for the cross validation data reported by the caret confusion matrix can be used as expected out of sample accuracy. It is 99.98%, so the out of sample error rate is 0.02%.
+
+# Prediction
+
+The predictions for the test data are written to a csv.
+
+```{r}
+
+write.csv(predTest, "testPrediction.csv")
+```

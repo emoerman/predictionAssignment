@@ -264,6 +264,11 @@ library(caret)</code></pre>
 ## Balanced Accuracy      1.0000   0.9999   0.9994   1.0000   1.0000</code></pre>
 <p>The confusion matrix in caret shows for the sample data a 100% match. The cross validation data has not been used in the training. Therefore the accuracy for the cross validation data reported by the caret confusion matrix can be used as expected out of sample accuracy. It is 99.98%, so the out of sample error rate is 0.02%.</p>
 </div>
+<div id="prediction" class="section level1">
+<h1>Prediction</h1>
+<p>The predictions for the test data are written to a csv.</p>
+<pre class="r"><code>write.csv(predTest, &quot;testPrediction.csv&quot;)</code></pre>
+</div>
 
 
 
